@@ -26,9 +26,27 @@ def _required_env(name: str) -> str:
     return value
 
 
+def _load_dotenv(path: Path = Path(".env")) -> None:
+    """Load simple KEY=VALUE entries from .env without overriding the shell."""
+
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def load_settings() -> Settings:
     """Load settings from environment variables."""
 
+    _load_dotenv()
     sqlite_db_path = Path(_required_env("SQLITE_DB_PATH")).expanduser().resolve()
     return Settings(
         openai_api_key=_required_env("OPENAI_API_KEY"),
@@ -40,4 +58,3 @@ def load_settings() -> Settings:
         pending_ttl_seconds=int(os.getenv("ASKDB_PENDING_TTL_SECONDS", "3600")),
         max_rows=int(os.getenv("ASKDB_MAX_ROWS", "100")),
     )
-

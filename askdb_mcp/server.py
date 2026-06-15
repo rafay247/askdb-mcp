@@ -54,7 +54,7 @@ def build_service() -> tuple[AskDBService, uvicorn.Server]:
         executor=executor,
         pending_store=store,
     )
-    api = create_app(settings, store, executor)
+    api = create_app(settings, store, executor, service)
     config = uvicorn.Config(api, host=settings.host, port=settings.port, log_level="info")
     return service, uvicorn.Server(config)
 
@@ -69,4 +69,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

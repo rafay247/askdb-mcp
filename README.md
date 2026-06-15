@@ -23,7 +23,7 @@ pip install -e ".[dev]"
 ## Configure
 
 ```bash
-cp .env.example .env
+create .env
 export OPENAI_API_KEY="sk-your-key"
 export SQLITE_DB_PATH="/absolute/path/to/database.sqlite"
 export ASKDB_API_KEY="change-me-local-key"

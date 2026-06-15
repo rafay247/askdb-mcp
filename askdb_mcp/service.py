@@ -32,7 +32,15 @@ class AskDBService:
             return {"ok": False, "error": "Question cannot be empty."}
 
         schema_context = self.schema_service.format_for_prompt()
-        generated = self.sql_generator.generate(question, schema_context)
+        try:
+            generated = self.sql_generator.generate(question, schema_context)
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": "Could not generate SQL with OpenAI.",
+                "detail": str(exc),
+            }
+
         try:
             operation = validate_sql(generated.sql)
         except SqlValidationError as exc:
@@ -89,4 +97,3 @@ class AskDBService:
 
     def ask_database_json(self, question: str) -> str:
         return json.dumps(self.ask_database(question), indent=2, default=str)
-
