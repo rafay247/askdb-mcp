@@ -2,6 +2,22 @@
 
 `askdb_mcp` is a local Python MCP server for asking a SQLite database questions in natural language. It uses OpenAI to generate SQL, executes read queries after validation, and requires FastAPI approval before running `INSERT`, `UPDATE`, or `DELETE`.
 
+## Demo
+
+![askdb_mcp demo](docs/media/demo.gif)
+
+A read question (`show all customers in Multan`) returns rows instantly, while a write command (`add customer Sara Ahmed …`) is held as a pending proposal until it is approved in the console.
+
+▶ [Watch the MP4](docs/media/demo.mp4)
+
+### Read query — runs immediately
+
+![Read query result](docs/media/read-query.png)
+
+### Write command — waits for approval
+
+![Write approval gate](docs/media/write-approval.png)
+
 ## Features
 
 - MCP tool: `askdb_ask_database`
