@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,220
+Step 1 - enter the approval key. It's required for every write.
+
+2
+00:00:02,220 --> 00:00:06,490
+Step 2 - ask in plain English: "show all customers." Reads run instantly.
+
+3
+00:00:06,490 --> 00:00:10,580
+Ask for one customer - get back exactly that row.
+
+4
+00:00:10,580 --> 00:00:13,790
+Step 3 - add a customer. Writes wait as a pending proposal.
+
+5
+00:00:13,790 --> 00:00:16,080
+Approve with the key - now it's saved to the database.

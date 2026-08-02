@@ -21,7 +21,7 @@ UI_HTML = """
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>askdb_mcp</title>
+  <title>AskDB</title>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
     :root {
@@ -58,11 +58,11 @@ UI_HTML = """
       opacity: .26;
     }
     main {
-      width: min(1160px, calc(100% - 32px));
-      margin: 28px auto 40px;
+      width: min(1480px, calc(100% - 36px));
+      margin: 22px auto 36px;
       display: grid;
-      grid-template-columns: 86px minmax(0, 1fr);
-      gap: 22px;
+      grid-template-columns: 64px minmax(0, 1fr);
+      gap: 18px;
       animation: enter .45s ease-out both;
     }
     @keyframes enter {
@@ -70,7 +70,7 @@ UI_HTML = """
       to { opacity: 1; transform: translateY(0); }
     }
     .rail {
-      min-height: calc(100vh - 68px);
+      min-height: calc(100vh - 58px);
       border: 2px solid var(--line);
       background: var(--ink);
       color: var(--paper);
@@ -87,12 +87,12 @@ UI_HTML = """
       font-weight: 700;
       text-transform: uppercase;
     }
-    .shell { display: grid; gap: 18px; }
+    .shell { display: grid; gap: 16px; }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
-      gap: 18px;
-      align-items: end;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+      gap: 16px;
+      align-items: center;
     }
     h1, h2, h3 { font-family: "Fraunces", Georgia, serif; margin: 0; letter-spacing: 0; }
     h1 { font-size: clamp(44px, 8vw, 92px); line-height: .88; max-width: 720px; }
@@ -116,8 +116,23 @@ UI_HTML = """
       padding: 18px;
     }
     .command {
-      box-shadow: var(--shadow);
-      transform: translateX(-10px);
+      box-shadow: 8px 8px 0 #17120d;
+    }
+    .command-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+    .key-field {
+      min-width: 0;
+    }
+    .key-field label,
+    .question-field label {
+      margin-top: 0;
+    }
+    .key-field input {
+      min-height: 44px;
     }
     .metrics {
       display: grid;
@@ -144,7 +159,7 @@ UI_HTML = """
       outline: none;
     }
     textarea {
-      min-height: 118px;
+      min-height: 108px;
       resize: vertical;
       font-size: 18px;
       line-height: 1.45;
@@ -184,11 +199,21 @@ UI_HTML = """
     }
     .workspace {
       display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr);
+      grid-template-columns: minmax(0, 2.8fr) minmax(280px, .75fr);
       gap: 18px;
       align-items: start;
     }
-    .result-panel { min-height: 280px; }
+    .result-panel { min-height: 560px; }
+    .result-panel #result {
+      min-height: 458px;
+      overflow: auto;
+    }
+    .pending-panel {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+    }
     .empty {
       color: var(--muted);
       border: 2px dashed rgba(23,18,13,.35);
@@ -234,8 +259,8 @@ UI_HTML = """
       main { grid-template-columns: 1fr; }
       .rail { min-height: auto; height: 58px; }
       .rail span { writing-mode: horizontal-tb; transform: none; }
-      .hero, .workspace { grid-template-columns: 1fr; }
-      .command { transform: none; box-shadow: 8px 8px 0 #17120d; }
+      .hero, .command-grid, .workspace { grid-template-columns: 1fr; }
+      .pending-panel { position: static; max-height: none; }
     }
   </style>
 </head>
@@ -246,20 +271,26 @@ UI_HTML = """
       <header class="hero">
         <div>
           <div class="badge">Local approval console</div>
-          <h1>askdb_mcp</h1>
+          <h1>AskDB</h1>
         </div>
         <div class="metrics">
-          <div class="metric"><span>Database</span><strong id="dbState">checking</strong></div>
+          <div class="metric"><span>Connection</span><strong id="dbState">checking</strong></div>
           <div class="metric"><span>Pending</span><strong id="pendingCount">0</strong></div>
         </div>
       </header>
 
       <section class="command">
-        <label for="apiKey">Approval key</label>
-        <input id="apiKey" type="password" placeholder="ASKDB_API_KEY" autocomplete="off" />
-        <label for="question">Command</label>
-        <textarea id="question" placeholder="add new customer&#10;Rafay rafayf2@gmail.com Multan"></textarea>
-        <div class="row">
+        <div class="command-grid">
+          <div class="question-field">
+            <label for="question">Command</label>
+            <textarea id="question" placeholder="add new customer&#10;Alex Demo alex.demo@example.com Paris"></textarea>
+          </div>
+          <div class="key-field">
+            <label for="apiKey">Approval key</label>
+            <input id="apiKey" type="password" placeholder="ASKDB_API_KEY" autocomplete="off" />
+          </div>
+        </div>
+        <div class="row command-actions">
           <button id="askBtn">Run command</button>
           <button id="refreshBtn" class="secondary">Refresh pending</button>
           <span id="status" class="status">idle</span>
@@ -272,7 +303,7 @@ UI_HTML = """
           <div id="result" class="empty">No command has run yet.</div>
         </section>
 
-        <section>
+        <section class="pending-panel">
           <h2>Pending Writes</h2>
           <div id="pending" class="empty">No pending writes loaded.</div>
         </section>
@@ -300,6 +331,10 @@ UI_HTML = """
       statusEl.textContent = text;
     }
 
+    function setConnection(text) {
+      dbState.textContent = text;
+    }
+
     function escapeHtml(value) {
       return value.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#39;"}[ch]));
     }
@@ -312,6 +347,13 @@ UI_HTML = """
     }
 
     async function askDatabase() {
+      if (!apiKey.value.trim()) {
+        setConnection("locked");
+        setStatus("locked");
+        resultEl.className = "";
+        resultEl.innerHTML = "<pre>Approval key required.</pre>";
+        return;
+      }
       localStorage.setItem("askdb_api_key", apiKey.value);
       setStatus("working");
       askBtn.disabled = true;
@@ -324,7 +366,9 @@ UI_HTML = """
           body: JSON.stringify({question: question.value})
         });
         const data = await response.json();
+        if (response.status === 401) setConnection("invalid");
         if (!response.ok || data.ok === false) throw new Error(data.detail || data.error || "Request failed");
+        setConnection("connected");
         const sql = data.sql ? `<h3>SQL</h3><pre class="sql">${escapeHtml(data.sql)}</pre>` : "";
         const explanation = data.explanation ? `<p>${escapeHtml(data.explanation)}</p>` : "";
         const approval = data.pending_write_id ? `<p><strong>Pending write:</strong> ${escapeHtml(data.pending_write_id)}</p>` : "";
@@ -340,11 +384,21 @@ UI_HTML = """
     }
 
     async function loadPending() {
+      if (!apiKey.value.trim()) {
+        localStorage.removeItem("askdb_api_key");
+        setConnection("locked");
+        pendingCount.textContent = "0";
+        pendingEl.className = "empty";
+        pendingEl.textContent = "Enter approval key to load pending writes.";
+        return;
+      }
       localStorage.setItem("askdb_api_key", apiKey.value);
       try {
         const response = await fetch("/pending-writes", {headers: headers()});
         const data = await response.json();
+        if (response.status === 401) setConnection("invalid");
         if (!response.ok) throw new Error(data.detail || "Could not load pending writes");
+        setConnection("connected");
         pendingCount.textContent = data.count;
         if (!data.items.length) {
           pendingEl.className = "empty";
@@ -383,16 +437,29 @@ UI_HTML = """
     }
 
     async function loadHealth() {
-      const response = await fetch("/health");
-      const data = await response.json();
-      dbState.textContent = data.ok ? "online" : "offline";
-      pendingCount.textContent = data.pending_writes ?? 0;
+      try {
+        const response = await fetch("/health");
+        const data = await response.json();
+        setConnection(data.ok ? (apiKey.value ? "key ready" : "locked") : "offline");
+        pendingCount.textContent = data.pending_writes ?? 0;
+      } catch (error) {
+        setConnection("offline");
+      }
     }
 
     document.querySelector("#askBtn").addEventListener("click", askDatabase);
     document.querySelector("#refreshBtn").addEventListener("click", loadPending);
-    loadHealth();
-    if (apiKey.value) loadPending();
+    apiKey.addEventListener("input", () => {
+      if (apiKey.value.trim()) {
+        setConnection("key ready");
+      } else {
+        localStorage.removeItem("askdb_api_key");
+        setConnection("locked");
+      }
+    });
+    loadHealth().then(() => {
+      if (apiKey.value) loadPending();
+    });
   </script>
 </body>
 </html>
@@ -409,7 +476,7 @@ def create_app(
     executor: SQLiteExecutor,
     service: AskDBService | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="askdb_mcp approval API", version="0.1.0")
+    app = FastAPI(title="AskDB approval API", version="0.1.0")
 
     def require_api_key(x_askdb_key: str | None = Header(default=None, alias="X-AskDB-Key")) -> None:
         if x_askdb_key != settings.api_key:

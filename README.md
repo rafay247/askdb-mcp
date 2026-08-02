@@ -4,19 +4,9 @@
 
 ## Demo
 
-![askdb_mcp demo](docs/media/demo.gif)
+▶ [Watch the demo](docs/media/ui-demo.mp4) ([captions](docs/media/ui-demo.srt))
 
-A read question (`show all customers in Multan`) returns rows instantly, while a write command (`add customer Sara Ahmed …`) is held as a pending proposal until it is approved in the console.
-
-▶ [Watch the MP4](docs/media/demo.mp4)
-
-### Read query — runs immediately
-
-![Read query result](docs/media/read-query.png)
-
-### Write command — waits for approval
-
-![Write approval gate](docs/media/write-approval.png)
+A walkthrough of the local approval console: set the approval key, ask `show all customers` (executes instantly), ask for one customer by city, then `add customer …` — which is held as a pending proposal in the UI until it is approved.
 
 ## Features
 
