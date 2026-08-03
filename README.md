@@ -4,9 +4,9 @@
 
 ## Demo
 
-▶ [Watch the demo](docs/media/ui-demo.mp4) ([captions](docs/media/ui-demo.srt))
+<video src="docs/media/ui-demo.mp4" controls muted title="askdb_mcp demo"></video>
 
-A walkthrough of the local approval console: set the approval key, ask `show all customers` (executes instantly), ask for one customer by city, then `add customer …` — which is held as a pending proposal in the UI until it is approved.
+A walkthrough of the local approval console: set the approval key, ask `show all customers` (executes instantly), ask for one customer by city, then `add customer …` — which is held as a pending proposal in the UI until it is approved. Narrated, with captions burned in.
 
 ## Features
 

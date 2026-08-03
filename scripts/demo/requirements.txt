@@ -1,0 +1,3 @@
+# Tooling for scripts/demo/build_video.py — not needed to run askdb_mcp itself.
+imageio-ffmpeg
+piper-tts
