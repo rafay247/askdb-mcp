@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 
 from openai import OpenAI
 
@@ -27,12 +28,19 @@ SQL_GENERATION_SCHEMA = {
 class OpenAISqlGenerator:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self.client = OpenAI(api_key=settings.openai_api_key)
+        self.client: OpenAI | None = None
+        if not _uses_placeholder_key(settings.openai_api_key):
+            self.client = OpenAI(api_key=settings.openai_api_key, timeout=30.0, max_retries=1)
 
     def generate(self, question: str, schema_context: str) -> GeneratedSql:
         fallback = _local_sample_fallback(question, schema_context)
-        if _uses_placeholder_key(self.settings.openai_api_key) and fallback is not None:
-            return fallback
+        if self.client is None:
+            if fallback is not None:
+                return fallback
+            raise RuntimeError(
+                "OPENAI_API_KEY is not configured, and the built-in sample queries "
+                "do not cover this request."
+            )
 
         system_prompt = (
             "You translate natural language into one SQLite SQL statement. "
@@ -64,9 +72,14 @@ class OpenAISqlGenerator:
                     }
                 },
             )
-        except Exception:
+        except Exception as exc:
             if fallback is not None:
-                return fallback
+                # Say so, since the keyword fallback can be a rougher answer than asked for.
+                return replace(
+                    fallback,
+                    explanation=f"{fallback.explanation} OpenAI request failed ({type(exc).__name__}), "
+                    "so a built-in sample query was used.",
+                )
             raise
 
         payload = json.loads(response.output_text)
@@ -78,8 +91,8 @@ class OpenAISqlGenerator:
         )
 
 
-def _uses_placeholder_key(api_key: str) -> bool:
-    key = api_key.strip().lower()
+def _uses_placeholder_key(api_key: str | None) -> bool:
+    key = (api_key or "").strip().lower()
     return not key or key.startswith("replace_") or key in {"sk-your-key", "your_openai_key_here"}
 
 

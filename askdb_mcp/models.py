@@ -19,6 +19,7 @@ class PendingStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     EXECUTED = "executed"
+    FAILED = "failed"
     EXPIRED = "expired"
 
 
@@ -37,6 +38,7 @@ class QueryResult:
     rows: list[dict[str, Any]]
     row_count: int
     affected_rows: int
+    truncated: bool = False
 
 
 @dataclass
@@ -50,6 +52,7 @@ class PendingWrite:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     executed_at: datetime | None = None
     result: QueryResult | None = None
+    error: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

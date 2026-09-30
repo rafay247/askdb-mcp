@@ -45,3 +45,9 @@ FastAPI exposes `GET /health`, `GET /pending-writes`, `GET /pending-writes/{id}`
 SQL validation rejects multiple statements, unsupported statement types, comments, and schema-changing or attachment statements such as `DROP`, `ALTER`, `CREATE`, `TRUNCATE`, `ATTACH`, `DETACH`, and unsafe `PRAGMA` usage.
 
 The implementation is intentionally small and modular: configuration, schema inspection, SQL generation, validation, SQLite execution, pending write storage, MCP tools, and FastAPI routes live in separate modules.
+
+## Hosted Deployment (Vercel)
+
+`app.py` exposes `askdb_mcp.web.create_hosted_app()` as a serverless ASGI app. It serves the UI, the approval API, and a stateless streamable-HTTP MCP endpoint at `/mcp` (a fresh session manager per request, so it does not depend on ASGI lifespan events). When `SQLITE_DB_PATH` is unset on Vercel, a sample database is seeded into `/tmp`, which is ephemeral per instance; pending writes stay in memory. Missing or weak configuration returns a 503 with a hint instead of crashing the function.
+
+SQL safety is layered: the validator ignores quoted text, rejects comments, multiple statements, and blocked keywords, and classifies `WITH ... INSERT/UPDATE/DELETE` as a write. The executor then opens reads with `mode=ro` and installs a SQLite authorizer that only permits the expected actions, and enables foreign keys for approved writes. Approval failures are stored with status `failed` and the SQLite error.

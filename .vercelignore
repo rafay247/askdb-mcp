@@ -1,0 +1,11 @@
+.venv/
+.env
+*.sqlite
+*.sqlite-*
+tests/
+scripts/
+docs/media/
+.agents/
+.codex/
+**/__pycache__/
+.env.local

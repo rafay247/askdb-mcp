@@ -60,6 +60,14 @@ class PendingWriteStore:
             pending.result = result
             return pending
 
+    def mark_failed(self, pending_id: str, error: str) -> PendingWrite:
+        with self._lock:
+            pending = self._items[pending_id]
+            pending.status = PendingStatus.FAILED
+            pending.executed_at = datetime.now(timezone.utc)
+            pending.error = error
+            return pending
+
     def _require_pending_locked(self, pending_id: str) -> PendingWrite:
         pending = self._items.get(pending_id)
         if pending is None:
@@ -70,7 +78,11 @@ class PendingWriteStore:
 
     def _expire_old_locked(self) -> None:
         now = datetime.now(timezone.utc)
-        for pending in self._items.values():
-            if pending.status == PendingStatus.PENDING and now - pending.created_at > self.ttl:
+        for pending_id, pending in list(self._items.items()):
+            age = now - pending.created_at
+            if pending.status == PendingStatus.PENDING and age > self.ttl:
                 pending.status = PendingStatus.EXPIRED
+            # Keep finished proposals around for lookups, but don't grow forever.
+            elif pending.status != PendingStatus.PENDING and age > self.ttl * 2:
+                del self._items[pending_id]
 

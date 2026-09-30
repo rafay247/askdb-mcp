@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+import sqlite3
+from typing import Any, Protocol
 
-from askdb_mcp.models import GeneratedSql, SqlOperation
-from askdb_mcp.openai_sql_generator import OpenAISqlGenerator
+from askdb_mcp.models import GeneratedSql, PendingStatus, PendingWrite, SqlOperation
 from askdb_mcp.pending_store import PendingWriteStore
 from askdb_mcp.schema_service import SchemaService
 from askdb_mcp.sql_validator import SqlValidationError, validate_sql
 from askdb_mcp.sqlite_executor import SQLiteExecutor
+
+
+class SqlGenerator(Protocol):
+    def generate(self, question: str, schema_context: str) -> GeneratedSql: ...
 
 
 class AskDBService:
@@ -18,7 +22,7 @@ class AskDBService:
         self,
         *,
         schema_service: SchemaService,
-        sql_generator: OpenAISqlGenerator,
+        sql_generator: SqlGenerator,
         executor: SQLiteExecutor,
         pending_store: PendingWriteStore,
     ) -> None:
@@ -41,6 +45,13 @@ class AskDBService:
                 "detail": str(exc),
             }
 
+        if generated.operation == SqlOperation.UNSUPPORTED and not generated.sql.strip():
+            return {
+                "ok": False,
+                "error": "This request cannot be answered with a supported SQL statement.",
+                "explanation": generated.explanation,
+            }
+
         try:
             operation = validate_sql(generated.sql)
         except SqlValidationError as exc:
@@ -61,7 +72,15 @@ class AskDBService:
             }
 
         if operation == SqlOperation.READ:
-            result = self.executor.execute(generated.sql)
+            try:
+                result = self.executor.execute(generated.sql)
+            except (sqlite3.Error, SqlValidationError) as exc:
+                return {
+                    "ok": False,
+                    "error": f"SQLite could not run the generated query: {exc}",
+                    "generated_sql": generated.sql,
+                    "explanation": generated.explanation,
+                }
             return {
                 "ok": True,
                 "status": "executed",
@@ -71,6 +90,7 @@ class AskDBService:
                 "columns": result.columns,
                 "rows": result.rows,
                 "row_count": result.row_count,
+                "truncated": result.truncated,
             }
 
         pending = self.pending_store.create(
@@ -97,3 +117,29 @@ class AskDBService:
 
     def ask_database_json(self, question: str) -> str:
         return json.dumps(self.ask_database(question), indent=2, default=str)
+
+    def describe_schema(self) -> dict[str, Any]:
+        return self.schema_service.describe_schema()
+
+    def list_pending(self) -> list[PendingWrite]:
+        return [item for item in self.pending_store.list() if item.status == PendingStatus.PENDING]
+
+    def get_pending(self, pending_id: str) -> PendingWrite | None:
+        return self.pending_store.get(pending_id)
+
+    def approve_write(self, pending_id: str) -> PendingWrite:
+        """Execute a pending write.
+
+        Raises KeyError if the proposal is unknown and ValueError if it is no longer
+        pending. Execution failures are recorded on the proposal with status ``failed``.
+        """
+
+        pending = self.pending_store.approve(pending_id)
+        try:
+            result = self.executor.execute(pending.sql)
+        except (sqlite3.Error, SqlValidationError) as exc:
+            return self.pending_store.mark_failed(pending.id, str(exc))
+        return self.pending_store.mark_executed(pending.id, result)
+
+    def reject_write(self, pending_id: str) -> PendingWrite:
+        return self.pending_store.reject(pending_id)

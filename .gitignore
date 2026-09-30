@@ -6,3 +6,5 @@ __pycache__/
 example.sqlite
 scripts/demo/voices/
 scripts/demo/.build/
+.vercel
+.env.local
